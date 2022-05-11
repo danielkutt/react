@@ -310,6 +310,8 @@ export default class Agent extends EventEmitter<{|
   }
 
   getIDForNode(node: Object): number | null {
+    let bestMatchingId = null;
+
     for (const rendererID in this._rendererInterfaces) {
       const renderer = ((this._rendererInterfaces[
         (rendererID: any)
@@ -318,14 +320,20 @@ export default class Agent extends EventEmitter<{|
       try {
         const id = renderer.getFiberIDForNative(node, true);
         if (id !== null) {
-          return id;
+          bestMatchingId = id;
+
+          const fiber = renderer.renderer.findFiberByHostInstance(node);
+          if (fiber.stateNode === node) {
+            break;
+          }
         }
       } catch (error) {
         // Some old React versions might throw if they can't find a match.
         // If so we should ignore it...
       }
     }
-    return null;
+  
+    return bestMatchingId;
   }
 
   getBackendVersion = () => {
